@@ -196,8 +196,7 @@ let package = Package(
 )
 
 // FIXME: Conditionalize these flags since SwiftPM 5.3 and earlier will crash for platforms they don't know about.
-#if os(Windows)
-
+#if os(Windows) || compiler(>=5.4)
 do {
     let llvmTargets: Set<String> = [
         "llvmDemangle",
@@ -227,6 +226,8 @@ package.targets.first { $0.name == "libllbuild" }?.cxxSettings = [
     // symbols are exported from the DLL that is being built here until
     // static linking is supported on Windows.
     .define("libllbuild_EXPORTS", .when(platforms: [.windows])),
+    // This is a workaround for llvm/llvm-project#40056.
+    .unsafeFlags(["-Xclang", "-fno-split-cold-code"], .when(platforms: [.windows], configuration: .release))
 ]
 
 package.targets.first { $0.name == "llbuildBasic" }?.linkerSettings = [
